@@ -1,0 +1,16 @@
+Options -Indexes
+
+<IfModule mod_headers.c>
+  Header set X-Content-Type-Options "nosniff"
+  Header set Referrer-Policy "strict-origin-when-cross-origin"
+  Header set X-Frame-Options "DENY"
+</IfModule>
+
+<FilesMatch "(?i)\\.(env|ini|log|sql|bak|old|zip|tar|gz|7z)$">
+  Require all denied
+</FilesMatch>
+
+<IfModule mod_rewrite.c>
+  RewriteEngine On
+  RewriteRule ^test\\.php$ - [R=404,L]
+</IfModule>
