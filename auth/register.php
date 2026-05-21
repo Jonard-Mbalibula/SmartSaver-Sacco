@@ -44,6 +44,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 }
 
 $title = 'Register';
+$page_theme = 'auth';
+$minimal_layout = true;
 require __DIR__ . '/../includes/layout_top.php';
 ?>
 <div class="auth-wrapper">

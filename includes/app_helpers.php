@@ -11,7 +11,7 @@ if (!function_exists('h')) {
 if (!function_exists('brand_image_url')) {
     function brand_image_url(): string
     {
-        return '/DSLT/includes/image.png';
+        return '/DSLT/image.png';
     }
 }
 
