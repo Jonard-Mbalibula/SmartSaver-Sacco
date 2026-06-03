@@ -1,35 +1,147 @@
 "use client";
 
-import { useActionState, useState } from "react";
-import { resetPasswordAction } from "@/app/actions";
-import type { ActionResult } from "@/lib/types";
-import { Eye, EyeOff, Lock, CheckCircle } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Eye, EyeOff, Lock, CheckCircle, AlertTriangle, Loader } from "lucide-react";
+import { createSupabaseBrowserClient } from "@/lib/supabase-browser";
 
-const initial: ActionResult = { success: false };
+type Stage = "loading" | "ready" | "success" | "error";
 
 export function ResetPasswordForm() {
-  const [state, action, pending] = useActionState(resetPasswordAction, initial);
+  const [stage, setStage] = useState<Stage>("loading");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirm, setConfirm] = useState("");
   const [showPwd, setShowPwd] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+  const [busy, setBusy] = useState(false);
 
-  if (state.success) {
+  // On mount: read the access_token + refresh_token from the URL hash
+  // and set the session so we can call updateUser()
+  useEffect(() => {
+    async function init() {
+      const hash = window.location.hash;
+
+      // Parse fragment: #access_token=...&refresh_token=...&type=recovery
+      const params = new URLSearchParams(hash.replace(/^#/, ""));
+      const accessToken = params.get("access_token");
+      const refreshToken = params.get("refresh_token");
+      const type = params.get("type");
+
+      if (!accessToken || !refreshToken || type !== "recovery") {
+        setErrorMsg("Invalid or expired reset link. Please request a new one.");
+        setStage("error");
+        return;
+      }
+
+      try {
+        const supabase = createSupabaseBrowserClient();
+        const { error } = await supabase.auth.setSession({
+          access_token: accessToken,
+          refresh_token: refreshToken
+        });
+
+        if (error) {
+          setErrorMsg(error.message);
+          setStage("error");
+        } else {
+          // Clear the hash from the URL so tokens aren't visible
+          window.history.replaceState(null, "", window.location.pathname);
+          setStage("ready");
+        }
+      } catch (e) {
+        setErrorMsg((e as Error).message);
+        setStage("error");
+      }
+    }
+
+    init();
+  }, []);
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (password !== confirm) {
+      setErrorMsg("Passwords do not match.");
+      return;
+    }
+    if (password.length < 8) {
+      setErrorMsg("Password must be at least 8 characters.");
+      return;
+    }
+
+    setBusy(true);
+    setErrorMsg("");
+
+    try {
+      const supabase = createSupabaseBrowserClient();
+      const { error } = await supabase.auth.updateUser({ password });
+
+      if (error) {
+        setErrorMsg(error.message);
+        setBusy(false);
+      } else {
+        // Sign out so they log in fresh with the new password
+        await supabase.auth.signOut();
+        setStage("success");
+      }
+    } catch (e) {
+      setErrorMsg((e as Error).message);
+      setBusy(false);
+    }
+  }
+
+  // Loading — exchanging the token
+  if (stage === "loading") {
+    return (
+      <div className="auth-success" style={{ padding: "32px 0" }}>
+        <Loader size={36} className="auth-success-icon spin" aria-hidden="true" />
+        <p style={{ color: "var(--muted)", marginTop: 12 }}>Verifying reset link…</p>
+      </div>
+    );
+  }
+
+  // Invalid / expired link
+  if (stage === "error") {
+    return (
+      <div className="auth-success">
+        <AlertTriangle size={36} style={{ color: "var(--red)" }} aria-hidden="true" />
+        <h2 style={{ color: "var(--red)" }}>Link invalid</h2>
+        <p>{errorMsg}</p>
+        <a
+          href="/forgot-password"
+          className="btn-login"
+          style={{ marginTop: 16, display: "flex", justifyContent: "center" }}
+        >
+          Request a new link
+        </a>
+      </div>
+    );
+  }
+
+  // Success
+  if (stage === "success") {
     return (
       <div className="auth-success">
         <CheckCircle size={40} className="auth-success-icon" aria-hidden="true" />
         <h2>Password updated</h2>
-        <p>{state.message}</p>
-        <a href="/login" className="btn-login" style={{ marginTop: 16, display: "flex", justifyContent: "center" }}>
+        <p>Your password has been changed. You can now sign in with your new password.</p>
+        <a
+          href="/login"
+          className="btn-login"
+          style={{ marginTop: 16, display: "flex", justifyContent: "center" }}
+        >
           Sign in now
         </a>
       </div>
     );
   }
 
+  // Ready — show the form
   return (
-    <form action={action} className="login-form">
-      {state?.error && (
+    <form onSubmit={handleSubmit} className="login-form">
+      {errorMsg && (
         <div className="form-feedback feedback-err" role="alert">
-          {state.error}
+          {errorMsg}
         </div>
       )}
 
@@ -37,8 +149,9 @@ export function ResetPasswordForm() {
         New password
         <span className="pwd-wrap">
           <input
-            name="password"
             type={showPwd ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
             placeholder="Min. 8 characters"
             autoComplete="new-password"
             minLength={8}
@@ -59,8 +172,9 @@ export function ResetPasswordForm() {
         Confirm new password
         <span className="pwd-wrap">
           <input
-            name="confirm"
             type={showConfirm ? "text" : "password"}
+            value={confirm}
+            onChange={(e) => setConfirm(e.target.value)}
             placeholder="Repeat new password"
             autoComplete="new-password"
             required
@@ -76,9 +190,9 @@ export function ResetPasswordForm() {
         </span>
       </label>
 
-      <button type="submit" disabled={pending} className="btn-login">
+      <button type="submit" disabled={busy} className="btn-login">
         <Lock size={16} aria-hidden="true" />
-        {pending ? "Updating…" : "Update password"}
+        {busy ? "Updating…" : "Update password"}
       </button>
     </form>
   );

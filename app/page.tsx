@@ -64,7 +64,7 @@ export default function HomePage() {
       {/* ── Hero ── */}
       <section className="home-hero">
         <div className="home-hero-content shell">
-          <p className="eyebrow">Built for SACCOs in Uganda</p>
+          <p className="eyebrow">Built To manage SACCO FINANCIAL</p>
           <h1>
             Savings, loans, and member records —<br />
             in one working desk.
