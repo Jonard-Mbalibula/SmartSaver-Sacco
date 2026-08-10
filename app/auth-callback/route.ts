@@ -5,9 +5,16 @@ import { cookies } from "next/headers";
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
   const code = searchParams.get("code");
-  const type = searchParams.get("type"); // "recovery" for password-reset links (PKCE flow)
-  // For recovery links, land on the reset-password page; otherwise go to dashboard
-  const next = searchParams.get("next") ?? (type === "recovery" ? "/reset-password" : "/dashboard");
+  const type = searchParams.get("type"); // "recovery" for password-reset links
+  const next = searchParams.get("next") ?? "/dashboard";
+
+  // For password recovery, redirect straight to /reset-password with the code
+  // so the browser client can exchange it and catch the PASSWORD_RECOVERY event.
+  if (code && type === "recovery") {
+    return NextResponse.redirect(
+      `${origin}/reset-password?code=${code}`
+    );
+  }
 
   if (code) {
     const cookieStore = await cookies();

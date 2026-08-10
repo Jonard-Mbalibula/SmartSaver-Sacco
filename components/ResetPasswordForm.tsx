@@ -15,59 +15,98 @@ export function ResetPasswordForm() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // On mount: handle both token flows:
-  // 1. Hash flow (legacy): #access_token=...&refresh_token=...&type=recovery
-  // 2. PKCE flow (newer): auth-callback already exchanged the code and set the
-  //    session cookie — we just need to verify the session is a recovery session.
+  // On mount: handle both token delivery methods Supabase may use.
+  //
+  // 1. Hash flow (legacy OTP): the email link contains
+  //    #access_token=...&refresh_token=...&type=recovery directly.
+  //    We call setSession() with those tokens.
+  //
+  // 2. PKCE flow (default since Supabase JS v2 + @supabase/ssr):
+  //    The email link goes to /auth-callback?code=...&type=recovery.
+  //    auth-callback exchanges the code server-side and redirects here.
+  //    The session lives in the server cookie, so getSession() on the
+  //    browser client returns null. Instead we rely on onAuthStateChange
+  //    which fires PASSWORD_RECOVERY once Supabase detects the recovery
+  //    session — this is the only reliable cross-flow detection method.
   useEffect(() => {
-    async function init() {
-      const supabase = createSupabaseBrowserClient();
+    const supabase = createSupabaseBrowserClient();
 
-      // ── Hash flow ──────────────────────────────────────────────────────────
-      const hash = window.location.hash;
-      const params = new URLSearchParams(hash.replace(/^#/, ""));
-      const accessToken = params.get("access_token");
-      const refreshToken = params.get("refresh_token");
-      const hashType = params.get("type");
+    // ── Hash flow ────────────────────────────────────────────────────────────
+    const hash = window.location.hash;
+    const params = new URLSearchParams(hash.replace(/^#/, ""));
+    const accessToken = params.get("access_token");
+    const refreshToken = params.get("refresh_token");
+    const hashType = params.get("type");
 
-      if (accessToken && refreshToken && hashType === "recovery") {
-        try {
-          const { error } = await supabase.auth.setSession({
-            access_token: accessToken,
-            refresh_token: refreshToken
-          });
+    if (accessToken && refreshToken && hashType === "recovery") {
+      supabase.auth
+        .setSession({ access_token: accessToken, refresh_token: refreshToken })
+        .then(({ error }) => {
           if (error) {
             setErrorMsg(error.message);
             setStage("error");
           } else {
-            // Clear the hash so tokens aren't visible in the URL
             window.history.replaceState(null, "", window.location.pathname);
             setStage("ready");
           }
-        } catch (e) {
-          setErrorMsg((e as Error).message);
+        })
+        .catch((e: Error) => {
+          setErrorMsg(e.message);
           setStage("error");
-        }
-        return;
-      }
-
-      // ── PKCE flow ──────────────────────────────────────────────────────────
-      // auth-callback already exchanged the code; check we have a valid session.
-      try {
-        const { data: { session }, error } = await supabase.auth.getSession();
-        if (error || !session) {
-          setErrorMsg("Invalid or expired reset link. Please request a new one.");
-          setStage("error");
-          return;
-        }
-        setStage("ready");
-      } catch (e) {
-        setErrorMsg((e as Error).message);
-        setStage("error");
-      }
+        });
+      return; // listener not needed for hash flow
     }
 
-    init();
+    // ── PKCE flow via ?code= param (recovery) ───────────────────────────────
+    // auth-callback passes the code here; we exchange it client-side so the
+    // browser Supabase client gets the session and fires PASSWORD_RECOVERY.
+    const urlParams = new URLSearchParams(window.location.search);
+    const code = urlParams.get("code");
+
+    if (code) {
+      // Clean the URL immediately
+      window.history.replaceState(null, "", window.location.pathname);
+
+      supabase.auth
+        .exchangeCodeForSession(code)
+        .then(({ error }) => {
+          if (error) {
+            setErrorMsg(error.message);
+            setStage("error");
+          }
+          // On success, onAuthStateChange below fires PASSWORD_RECOVERY → sets stage "ready"
+        })
+        .catch((e: Error) => {
+          setErrorMsg(e.message);
+          setStage("error");
+        });
+      // Fall through to the listener below — it will catch PASSWORD_RECOVERY
+    }
+
+    // ── PKCE flow — listen for the PASSWORD_RECOVERY event ──────────────────
+    // Give it 8 s; if nothing fires the link is invalid/expired.
+    const timeout = setTimeout(() => {
+      setErrorMsg("Invalid or expired reset link. Please request a new one.");
+      setStage("error");
+    }, 8000);
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        if (event === "PASSWORD_RECOVERY" && session) {
+          clearTimeout(timeout);
+          setStage("ready");
+        } else if (event === "SIGNED_IN" && session) {
+          // auth-callback already signed us in with the recovery session
+          clearTimeout(timeout);
+          setStage("ready");
+        }
+      }
+    );
+
+    return () => {
+      clearTimeout(timeout);
+      subscription.unsubscribe();
+    };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
