@@ -15,39 +15,52 @@ export function ResetPasswordForm() {
   const [showConfirm, setShowConfirm] = useState(false);
   const [busy, setBusy] = useState(false);
 
-  // On mount: read the access_token + refresh_token from the URL hash
-  // and set the session so we can call updateUser()
+  // On mount: handle both token flows:
+  // 1. Hash flow (legacy): #access_token=...&refresh_token=...&type=recovery
+  // 2. PKCE flow (newer): auth-callback already exchanged the code and set the
+  //    session cookie — we just need to verify the session is a recovery session.
   useEffect(() => {
     async function init() {
-      const hash = window.location.hash;
+      const supabase = createSupabaseBrowserClient();
 
-      // Parse fragment: #access_token=...&refresh_token=...&type=recovery
+      // ── Hash flow ──────────────────────────────────────────────────────────
+      const hash = window.location.hash;
       const params = new URLSearchParams(hash.replace(/^#/, ""));
       const accessToken = params.get("access_token");
       const refreshToken = params.get("refresh_token");
-      const type = params.get("type");
+      const hashType = params.get("type");
 
-      if (!accessToken || !refreshToken || type !== "recovery") {
-        setErrorMsg("Invalid or expired reset link. Please request a new one.");
-        setStage("error");
+      if (accessToken && refreshToken && hashType === "recovery") {
+        try {
+          const { error } = await supabase.auth.setSession({
+            access_token: accessToken,
+            refresh_token: refreshToken
+          });
+          if (error) {
+            setErrorMsg(error.message);
+            setStage("error");
+          } else {
+            // Clear the hash so tokens aren't visible in the URL
+            window.history.replaceState(null, "", window.location.pathname);
+            setStage("ready");
+          }
+        } catch (e) {
+          setErrorMsg((e as Error).message);
+          setStage("error");
+        }
         return;
       }
 
+      // ── PKCE flow ──────────────────────────────────────────────────────────
+      // auth-callback already exchanged the code; check we have a valid session.
       try {
-        const supabase = createSupabaseBrowserClient();
-        const { error } = await supabase.auth.setSession({
-          access_token: accessToken,
-          refresh_token: refreshToken
-        });
-
-        if (error) {
-          setErrorMsg(error.message);
+        const { data: { session }, error } = await supabase.auth.getSession();
+        if (error || !session) {
+          setErrorMsg("Invalid or expired reset link. Please request a new one.");
           setStage("error");
-        } else {
-          // Clear the hash from the URL so tokens aren't visible
-          window.history.replaceState(null, "", window.location.pathname);
-          setStage("ready");
+          return;
         }
+        setStage("ready");
       } catch (e) {
         setErrorMsg((e as Error).message);
         setStage("error");
