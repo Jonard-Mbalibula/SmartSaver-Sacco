@@ -10,6 +10,25 @@ export function hasSupabaseConfig() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
 }
 
+/**
+ * Production fail-closed check
+ * 
+ * In production, the application MUST have a database configured.
+ * Failing silently to demo mode in production would be a security disaster.
+ * 
+ * @throws Error if production environment lacks database configuration
+ */
+export function requireProductionDatabase() {
+  if (process.env.NODE_ENV === "production" && !hasSupabaseConfig()) {
+    throw new Error(
+      "FATAL: Database not configured in production environment. " +
+      "The application cannot operate without a database connection. " +
+      "Please configure NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY " +
+      "environment variables before deploying to production."
+    );
+  }
+}
+
 export function hasAnonKey() {
   return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY);
 }

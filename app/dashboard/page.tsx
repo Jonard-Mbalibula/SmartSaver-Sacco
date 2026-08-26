@@ -24,9 +24,13 @@ import { CreateLoanForm } from "@/components/CreateLoanForm";
 import { LoanActions } from "@/components/LoanActions";
 import { LogoutButton } from "@/components/LogoutButton";
 import { UserRoleManager } from "@/components/UserRoleManager";
-import { DeleteMemberButton } from "@/components/DeleteMemberButton";
+import { MemberStatusActions } from "@/components/MemberStatusActions";
 import { ReportDownload } from "@/components/ReportDownload";
+import { LoanProductForm } from "@/components/LoanProductForm";
+import { LoanProductList } from "@/components/LoanProductList";
+import { AuditLogViewer } from "@/components/AuditLogViewer";
 import { createSupabaseAuthClient, createSupabaseServerClient, hasAnonKey, hasSupabaseConfig } from "@/lib/supabase";
+import { getLoanProductsAdmin, getAuditLogs } from "@/app/actions";
 
 export const metadata = { title: "Admin Dashboard — SmartSaver Sacco" };
 
@@ -101,7 +105,13 @@ function MemberRow({ member }: { member: Member }) {
       <td>{member.phone}</td>
       <td><span className={`status status-member-${member.status}`}>{member.status}</span></td>
       <td>{fmtDate(member.joined_at)}</td>
-      <td><DeleteMemberButton memberId={member.id} memberName={member.full_name} /></td>
+      <td>
+        <MemberStatusActions 
+          memberId={member.id} 
+          memberName={member.full_name} 
+          currentStatus={member.status}
+        />
+      </td>
     </tr>
   );
 }
@@ -137,6 +147,15 @@ export default async function AdminDashboardPage() {
     } catch { /* ignore */ }
   }
 
+  // Fetch loan products
+  const loanProductsResult = await getLoanProductsAdmin();
+  const loanProducts = loanProductsResult.success ? (loanProductsResult.products ?? []) : [];
+
+  // Fetch audit logs (recent 20 entries)
+  const auditLogsResult = await getAuditLogs({ limit: 20, offset: 0 });
+  const auditLogs = auditLogsResult.logs || [];
+  const auditLogsTotal = auditLogsResult.total || 0;
+
   return (
     <main>
       {/* Topbar */}
@@ -169,6 +188,8 @@ export default async function AdminDashboardPage() {
           <a href="#new-member">Add member</a>
           <a href="#record-money">Record money</a>
           <a href="#new-loan">New loan</a>
+          <a href="#loan-products">Loan products</a>
+          <a href="#audit-logs">Activity log</a>
           <a href="#reports">Reports</a>
           <a href="#users">Manage users</a>
         </div>
@@ -200,7 +221,7 @@ export default async function AdminDashboardPage() {
             <div><h2>Record Transaction</h2><p>Post savings deposits, withdrawals, fees, or loan payments.</p></div>
             <BadgeDollarSign aria-hidden="true" />
           </div>
-          <RecordTransactionForm members={data.members} />
+          <RecordTransactionForm members={data.members} loans={data.loans} />
         </div>
         <div className="panel" id="new-loan">
           <div className="panel-head">
@@ -258,6 +279,48 @@ export default async function AdminDashboardPage() {
               <tbody>{data.members.map((m) => <MemberRow key={m.id} member={m} />)}</tbody>
             </table>
           )}
+        </div>
+      </section>
+
+      {/* Loan Products Management */}
+      <section className="shell members-section" id="loan-products">
+        <div className="panel">
+          <div className="panel-head">
+            <div>
+              <h2>Loan Product Management</h2>
+              <p>Configure loan products with eligibility rules, interest rates, and terms.</p>
+            </div>
+            <Settings aria-hidden="true" />
+          </div>
+          
+          <div className="workbench" style={{ gridTemplateColumns: '1.2fr 1fr', gap: '20px' }}>
+            <div>
+              <h3 style={{ fontSize: '1rem', marginBottom: '14px' }}>Create Loan Product</h3>
+              <LoanProductForm />
+            </div>
+            <div>
+              <h3 style={{ fontSize: '1rem', marginBottom: '14px' }}>Active Products</h3>
+              <LoanProductList products={loanProducts} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Audit Log Viewer */}
+      <section className="shell members-section" id="audit-logs">
+        <div className="panel">
+          <div className="panel-head">
+            <div>
+              <h2>Recent Activity</h2>
+              <p>System audit trail showing all administrative actions and security events.</p>
+            </div>
+            <ShieldCheck aria-hidden="true" />
+          </div>
+          <AuditLogViewer 
+            logs={auditLogs} 
+            totalCount={auditLogsTotal}
+            currentPage={0}
+          />
         </div>
       </section>
 

@@ -1,5 +1,8 @@
-import { createSupabaseServerClient, hasSupabaseConfig } from "./supabase";
+import { createSupabaseServerClient, hasSupabaseConfig, requireProductionDatabase } from "./supabase";
 import type { DashboardData, Loan, Member, MemberDetail, Transaction } from "./types";
+
+// Production safety check - must be called before any data operations
+requireProductionDatabase();
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -37,12 +40,12 @@ function getDemoData(): DashboardData {
     { id: "demo-4", full_name: "James Ssemakula", phone: "+256700000004", national_id: "CM000004", status: "paused", joined_at: d(200) },
   ];
   const transactions: Transaction[] = [
-    { id: "t1", member_id: "demo-1", type: "deposit",      amount: 125000, memo: "Weekly savings",       posted_at: d(1),  members: { full_name: "Amina Nakuya", phone: "+256700000001" } },
-    { id: "t2", member_id: "demo-2", type: "withdrawal",   amount: 40000,  memo: "Member withdrawal",    posted_at: d(2),  members: { full_name: "David Okello", phone: "+256700000002" } },
-    { id: "t3", member_id: "demo-3", type: "deposit",      amount: 200000, memo: "Monthly contribution", posted_at: d(3),  members: { full_name: "Sarah Namuli", phone: "+256700000003" } },
-    { id: "t4", member_id: "demo-1", type: "loan_payment", amount: 85000,  memo: "Loan instalment #1",   posted_at: d(5),  members: { full_name: "Amina Nakuya", phone: "+256700000001" } },
-    { id: "t5", member_id: "demo-2", type: "deposit",      amount: 50000,  memo: "Weekly savings",       posted_at: d(7),  members: { full_name: "David Okello", phone: "+256700000002" } },
-    { id: "t6", member_id: "demo-3", type: "fee",          amount: 5000,   memo: "Annual membership fee",posted_at: d(10), members: { full_name: "Sarah Namuli", phone: "+256700000003" } },
+    { id: "t1", member_id: "demo-1", type: "deposit",      amount: 125000, memo: "Weekly savings",       posted_at: d(1),  status: "posted", txn_reference: "TXN-2024-000001", reversal_reason: null, members: { full_name: "Amina Nakuya", phone: "+256700000001" } },
+    { id: "t2", member_id: "demo-2", type: "withdrawal",   amount: 40000,  memo: "Member withdrawal",    posted_at: d(2),  status: "posted", txn_reference: "TXN-2024-000002", reversal_reason: null, members: { full_name: "David Okello", phone: "+256700000002" } },
+    { id: "t3", member_id: "demo-3", type: "deposit",      amount: 200000, memo: "Monthly contribution", posted_at: d(3),  status: "posted", txn_reference: "TXN-2024-000003", reversal_reason: null, members: { full_name: "Sarah Namuli", phone: "+256700000003" } },
+    { id: "t4", member_id: "demo-1", type: "loan_payment", amount: 85000,  memo: "Loan instalment #1",   posted_at: d(5),  status: "posted", txn_reference: "TXN-2024-000004", reversal_reason: null, members: { full_name: "Amina Nakuya", phone: "+256700000001" } },
+    { id: "t5", member_id: "demo-2", type: "deposit",      amount: 50000,  memo: "Weekly savings",       posted_at: d(7),  status: "posted", txn_reference: "TXN-2024-000005", reversal_reason: null, members: { full_name: "David Okello", phone: "+256700000002" } },
+    { id: "t6", member_id: "demo-3", type: "fee",          amount: 5000,   memo: "Annual membership fee",posted_at: d(10), status: "posted", txn_reference: "TXN-2024-000006", reversal_reason: null, members: { full_name: "Sarah Namuli", phone: "+256700000003" } },
   ];
   const loans: Loan[] = [
     { id: "l1", member_id: "demo-1", principal: 500000, interest_rate: 5,    term_months: 6,  status: "approved", approved_at: d(15), created_at: d(20), members: { full_name: "Amina Nakuya", phone: "+256700000001" } },

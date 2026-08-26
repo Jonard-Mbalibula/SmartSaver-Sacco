@@ -16,6 +16,7 @@ import { getRoleFromUser } from "@/lib/roles";
 import type { Transaction, Loan } from "@/lib/types";
 import { LogoutButton } from "@/components/LogoutButton";
 import { ApplyLoanForm } from "@/components/ApplyLoanForm";
+import { getLoanProductsAdmin } from "@/app/actions";
 
 export const metadata = { title: "My Account — SmartSaver Sacco" };
 
@@ -94,6 +95,17 @@ export default async function MemberPortalPage() {
   }
 
   const detail = userId ? await getMemberPortalData(userId) : null;
+
+  // Fetch active loan products
+  const loanProductsResult = await getLoanProductsAdmin();
+  const loanProducts = loanProductsResult.success 
+    ? (loanProductsResult.products ?? []).filter(p => p.is_active) 
+    : [];
+
+  // Calculate membership days for eligibility
+  const membershipDays = detail 
+    ? Math.floor((Date.now() - new Date(detail.member.joined_at).getTime()) / (1000 * 60 * 60 * 24))
+    : 0;
 
   return (
     <main>
@@ -229,7 +241,11 @@ export default async function MemberPortalPage() {
                 </div>
                 <TrendingUp aria-hidden="true" />
               </div>
-              <ApplyLoanForm savingsBalance={detail.balance} />
+              <ApplyLoanForm 
+                savingsBalance={detail.balance} 
+                loanProducts={loanProducts}
+                membershipDays={membershipDays}
+              />
             </div>
           </section>
         </>

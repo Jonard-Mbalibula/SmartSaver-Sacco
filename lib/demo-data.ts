@@ -50,6 +50,9 @@ export const demoData: DashboardData = {
       amount: 125000,
       memo: "Weekly savings",
       posted_at: d(1),
+      status: "posted",
+      txn_reference: "TXN-2024-000001",
+      reversal_reason: null,
       members: { full_name: "Amina Nakuya", phone: "+256700000001" }
     },
     {
@@ -59,6 +62,9 @@ export const demoData: DashboardData = {
       amount: 40000,
       memo: "Member withdrawal",
       posted_at: d(2),
+      status: "posted",
+      txn_reference: "TXN-2024-000002",
+      reversal_reason: null,
       members: { full_name: "David Okello", phone: "+256700000002" }
     },
     {
@@ -68,6 +74,9 @@ export const demoData: DashboardData = {
       amount: 200000,
       memo: "Monthly contribution",
       posted_at: d(3),
+      status: "posted",
+      txn_reference: "TXN-2024-000003",
+      reversal_reason: null,
       members: { full_name: "Sarah Namuli", phone: "+256700000003" }
     },
     {
@@ -77,6 +86,9 @@ export const demoData: DashboardData = {
       amount: 85000,
       memo: "Loan instalment #1",
       posted_at: d(5),
+      status: "posted",
+      txn_reference: "TXN-2024-000004",
+      reversal_reason: null,
       members: { full_name: "Amina Nakuya", phone: "+256700000001" }
     },
     {
@@ -86,6 +98,9 @@ export const demoData: DashboardData = {
       amount: 50000,
       memo: "Weekly savings",
       posted_at: d(7),
+      status: "posted",
+      txn_reference: "TXN-2024-000005",
+      reversal_reason: null,
       members: { full_name: "David Okello", phone: "+256700000002" }
     },
     {
@@ -95,6 +110,9 @@ export const demoData: DashboardData = {
       amount: 5000,
       memo: "Annual membership fee",
       posted_at: d(10),
+      status: "posted",
+      txn_reference: "TXN-2024-000006",
+      reversal_reason: null,
       members: { full_name: "Sarah Namuli", phone: "+256700000003" }
     }
   ],

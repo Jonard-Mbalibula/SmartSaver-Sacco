@@ -17,6 +17,9 @@ export type Transaction = {
   amount: number;
   memo: string | null;
   posted_at: string;
+  status: "posted" | "reversed" | "reversal" | "adjustment";
+  txn_reference: string | null;
+  reversal_reason: string | null;
   members?: Pick<Member, "full_name" | "phone"> | null;
 };
 
@@ -67,8 +70,43 @@ export type UserProfile = {
   created_at: string;
 };
 
+/** Audit log entry for financial and administrative actions */
+export type AuditLog = {
+  id: string;
+  actor_user_id: string | null;
+  actor_role: string;
+  action: string;
+  entity_type: string | null;
+  entity_id: string | null;
+  old_value: Record<string, unknown> | null;
+  new_value: Record<string, unknown> | null;
+  reason: string | null;
+  metadata: Record<string, unknown> | null;
+  ip_address: string | null;
+  user_agent: string | null;
+  created_at: string;
+};
+
 export type ActionResult = {
   success: boolean;
   error?: string;
   message?: string;
+  data?: unknown; // Optional data field for bulk operations
+};
+
+export type LoanProduct = {
+  id: string;
+  name: string;
+  description: string | null;
+  interest_rate_min: number;
+  interest_rate_max: number;
+  interest_rate_default: number;
+  principal_min: number;
+  principal_max: number;
+  term_min_months: number;
+  term_max_months: number;
+  savings_multiplier: number;
+  min_membership_days: number;
+  requires_guarantor: boolean;
+  is_active: boolean;
 };

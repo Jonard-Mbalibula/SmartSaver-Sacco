@@ -1,6 +1,5 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
-import { getRoleFromUser } from "@/lib/roles";
 
 // Routes that require a logged-in session
 const AUTH_REQUIRED = ["/dashboard", "/member"];
@@ -41,7 +40,33 @@ export async function middleware(request: NextRequest) {
   });
 
   const { data: { user } } = await supabase.auth.getUser();
-  const role = getRoleFromUser(user);
+  
+  console.log('[MIDDLEWARE] Path:', pathname);
+  console.log('[MIDDLEWARE] User:', user?.id, user?.email);
+  
+  // Get role from DATABASE (not user_metadata) - this is the authoritative source
+  let role: "admin" | "member" = "member";
+  if (user) {
+    // Use service role client to bypass RLS for reliable profile lookup
+    const { NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY } = process.env;
+    if (NEXT_PUBLIC_SUPABASE_URL && SUPABASE_SERVICE_ROLE_KEY) {
+      const { createClient } = await import('@supabase/supabase-js');
+      const serviceClient = createClient(NEXT_PUBLIC_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+      
+      const { data: profiles, error: profileError } = await serviceClient
+        .from("user_profiles")
+        .select("role")
+        .eq("id", user.id);
+      
+      console.log('[MIDDLEWARE] Profiles:', profiles, 'Error:', profileError?.message);
+      
+      if (profiles && profiles.length > 0 && profiles[0].role === "admin") {
+        role = "admin";
+      }
+    }
+  }
+  
+  console.log('[MIDDLEWARE] Final role:', role);
 
   // 1. Unauthenticated — redirect to login, preserving the intended destination
   const needsAuth = AUTH_REQUIRED.some((p) => pathname.startsWith(p));

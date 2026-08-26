@@ -12,7 +12,8 @@ import {
 import { getMemberDetail } from "@/lib/data";
 import type { Loan, Transaction } from "@/lib/types";
 import { LoanActions } from "@/components/LoanActions";
-import { MemberStatusAction } from "@/components/MemberStatusAction";
+import { MemberStatusActions } from "@/components/MemberStatusActions";
+import { TransactionReversal } from "@/components/TransactionReversal";
 
 export async function generateMetadata({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -52,6 +53,9 @@ function TxRow({ tx }: { tx: Transaction }) {
       <td className="num">{fmt(Number(tx.amount))}</td>
       <td>{tx.memo ?? <span className="text-muted">—</span>}</td>
       <td>{fmtDate(tx.posted_at)}</td>
+      <td>
+        <TransactionReversal transaction={tx} />
+      </td>
     </tr>
   );
 }
@@ -123,7 +127,11 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
           </div>
         </div>
         <div className="member-actions">
-          <MemberStatusAction memberId={member.id} current={member.status} />
+          <MemberStatusActions 
+            memberId={member.id} 
+            memberName={member.full_name} 
+            currentStatus={member.status}
+          />
         </div>
       </section>
 
@@ -180,6 +188,7 @@ export default async function MemberDetailPage({ params }: { params: Promise<{ i
                   <th>Amount</th>
                   <th>Memo</th>
                   <th>Date</th>
+                  <th>Action</th>
                 </tr>
               </thead>
               <tbody>
