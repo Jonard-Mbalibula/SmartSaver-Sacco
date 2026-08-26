@@ -1,4 +1,3 @@
-import Image from "next/image";
 import { redirect } from "next/navigation";
 import {
   ArrowDownLeft,
@@ -9,7 +8,6 @@ import {
   User,
   TrendingUp
 } from "lucide-react";
-import brandImage from "../../image.png";
 import { getMemberPortalData } from "@/lib/data";
 import { createSupabaseAuthClient, hasAnonKey } from "@/lib/supabase";
 import { getRoleFromUser } from "@/lib/roles";
@@ -112,7 +110,7 @@ export default async function MemberPortalPage() {
       {/* Top bar */}
       <header className="shell topbar">
         <div className="brand">
-          <Image src={brandImage} alt="SmartSaver Sacco" priority width={52} height={52} />
+          <Landmark size={52} className="brand-icon" aria-hidden="true" />
           <div>
             <strong>SmartSaver Sacco</strong>
             <span>Member portal</span>

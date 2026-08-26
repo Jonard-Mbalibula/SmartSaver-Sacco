@@ -1,7 +1,5 @@
-import Image from "next/image";
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
-import brandImage from "../../image.png";
+import { ArrowLeft, Landmark } from "lucide-react";
 import { RegisterForm } from "@/components/RegisterForm";
 
 export const metadata = { title: "Create account — SmartSaver Sacco" };
@@ -11,7 +9,7 @@ export default function RegisterPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-brand">
-          <Image src={brandImage} alt="SmartSaver Sacco" width={56} height={56} priority />
+          <Landmark size={56} className="brand-icon" aria-hidden="true" />
           <div>
             <strong>SmartSaver Sacco</strong>
             <span>Financial Operations Console</span>

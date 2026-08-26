@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowDownLeft,
@@ -15,7 +14,6 @@ import {
   TrendingUp,
   Users
 } from "lucide-react";
-import brandImage from "../../image.png";
 import { getDashboardData } from "@/lib/data";
 import type { Loan, Member, Transaction } from "@/lib/types";
 import { AddMemberForm } from "@/components/AddMemberForm";
@@ -161,7 +159,7 @@ export default async function AdminDashboardPage() {
       {/* Topbar */}
       <header className="shell topbar">
         <div className="brand">
-          <Image src={brandImage} alt="SmartSaver Sacco" priority width={52} height={52} />
+          <Landmark size={52} className="brand-icon" aria-hidden="true" />
           <div>
             <strong>SmartSaver Sacco</strong>
             <span>Admin console</span>

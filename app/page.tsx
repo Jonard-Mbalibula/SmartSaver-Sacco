@@ -1,4 +1,3 @@
-import Image from "next/image";
 import Link from "next/link";
 import {
   ArrowRight,
@@ -9,7 +8,6 @@ import {
   Users,
   Zap
 } from "lucide-react";
-import brandImage from "../image.png";
 
 const features = [
   {
@@ -50,7 +48,7 @@ export default function HomePage() {
       {/* ── Nav ── */}
       <nav className="home-nav shell">
         <div className="brand">
-          <Image src={brandImage} alt="SmartSaver Sacco" priority width={44} height={44} />
+          <Landmark size={44} className="brand-icon" aria-hidden="true" />
           <div>
             <strong>SmartSaver Sacco</strong>
             <span>Financial Operations</span>
@@ -147,7 +145,7 @@ export default function HomePage() {
       {/* ── Footer ── */}
       <footer className="home-footer shell">
         <div className="brand">
-          <Image src={brandImage} alt="" aria-hidden="true" width={32} height={32} />
+          <Landmark size={32} className="brand-icon" aria-hidden="true" />
           <span>Kyezabu CybetHut © {new Date().getFullYear()}</span>
         </div>
         <nav aria-label="Footer links">

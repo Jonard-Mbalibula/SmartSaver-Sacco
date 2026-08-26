@@ -1,5 +1,4 @@
-import Image from "next/image";
-import brandImage from "../../image.png";
+import { Landmark } from "lucide-react";
 import { ResetPasswordForm } from "@/components/ResetPasswordForm";
 
 export const metadata = { title: "Set new password — SmartSaver Sacco" };
@@ -9,7 +8,7 @@ export default function ResetPasswordPage() {
     <div className="login-page">
       <div className="login-card">
         <div className="login-brand">
-          <Image src={brandImage} alt="SmartSaver Sacco" width={56} height={56} priority />
+          <Landmark size={56} className="brand-icon" aria-hidden="true" />
           <div>
             <strong>SmartSaver Sacco</strong>
             <span>Financial Operations Console</span>
