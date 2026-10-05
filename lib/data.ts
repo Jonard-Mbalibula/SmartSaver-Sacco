@@ -48,9 +48,9 @@ function getDemoData(): DashboardData {
     { id: "t6", member_id: "demo-3", type: "fee",          amount: 5000,   memo: "Annual membership fee",posted_at: d(10), status: "posted", txn_reference: "TXN-2024-000006", reversal_reason: null, members: { full_name: "Sarah Namuli", phone: "+256700000003" } },
   ];
   const loans: Loan[] = [
-    { id: "l1", member_id: "demo-1", principal: 500000, interest_rate: 5,    term_months: 6,  status: "approved", approved_at: d(15), created_at: d(20), members: { full_name: "Amina Nakuya", phone: "+256700000001" } },
-    { id: "l2", member_id: "demo-2", principal: 300000, interest_rate: null, term_months: 3,  status: "pending",  approved_at: null,  created_at: d(3),  members: { full_name: "David Okello", phone: "+256700000002" } },
-    { id: "l3", member_id: "demo-3", principal: 750000, interest_rate: null, term_months: 12, status: "pending",  approved_at: null,  created_at: d(1),  members: { full_name: "Sarah Namuli", phone: "+256700000003" } },
+    { id: "l1", member_id: "demo-1", principal: 500000, interest_rate: 5,    term_months: 6,  status: "approved", approved_at: d(15), closed_at: null, created_at: d(20), members: { full_name: "Amina Nakuya", phone: "+256700000001" } },
+    { id: "l2", member_id: "demo-2", principal: 300000, interest_rate: null, term_months: 3,  status: "pending",  approved_at: null,  closed_at: null, created_at: d(3),  members: { full_name: "David Okello", phone: "+256700000002" } },
+    { id: "l3", member_id: "demo-3", principal: 750000, interest_rate: null, term_months: 12, status: "pending",  approved_at: null,  closed_at: null, created_at: d(1),  members: { full_name: "Sarah Namuli", phone: "+256700000003" } },
   ];
   const deposits    = transactions.filter(t => t.type === "deposit").reduce((s, t) => s + Number(t.amount), 0);
   const withdrawals = transactions.filter(t => t.type === "withdrawal").reduce((s, t) => s + Number(t.amount), 0);

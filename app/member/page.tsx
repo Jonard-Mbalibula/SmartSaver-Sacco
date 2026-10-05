@@ -43,9 +43,20 @@ function TxRow({ tx }: { tx: Transaction }) {
 
 function LoanRow({ loan }: { loan: Loan }) {
   const rate = loan.interest_rate ?? 0;
-  const totalDue = loan.interest_rate != null
-    ? Number(loan.principal) * (1 + rate / 100)
+  const principal = Number(loan.principal);
+  
+  // Calculate actual months elapsed from approval date to now (or closed date)
+  const startDate = loan.approved_at ? new Date(loan.approved_at) : null;
+  const endDate = loan.closed_at ? new Date(loan.closed_at) : new Date();
+  const monthsElapsed = startDate 
+    ? Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)))
+    : loan.term_months; // Fallback to term_months if not approved yet
+  
+  // Total Interest = Principal × Rate × Actual Months Elapsed
+  const totalInterest = loan.interest_rate != null 
+    ? principal * (rate / 100) * monthsElapsed
     : null;
+  const totalDue = totalInterest != null ? principal + totalInterest : null;
   const monthly = (totalDue != null && loan.term_months > 0)
     ? totalDue / loan.term_months
     : null;

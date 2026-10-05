@@ -125,6 +125,7 @@ export const demoData: DashboardData = {
       term_months: 6,
       status: "approved",
       approved_at: d(15),
+      closed_at: null,
       created_at: d(20),
       members: { full_name: "Amina Nakuya", phone: "+256700000001" }
     },
@@ -136,6 +137,7 @@ export const demoData: DashboardData = {
       term_months: 3,
       status: "pending",
       approved_at: null,
+      closed_at: null,
       created_at: d(3),
       members: { full_name: "David Okello", phone: "+256700000002" }
     },
@@ -147,6 +149,7 @@ export const demoData: DashboardData = {
       term_months: 12,
       status: "pending",
       approved_at: null,
+      closed_at: null,
       created_at: d(1),
       members: { full_name: "Sarah Namuli", phone: "+256700000003" }
     }

@@ -65,16 +65,30 @@ function buildCSV(props: Props): string {
   }
 
   if (reportType === "loans" && loans) {
-    const header = ["Member", "Principal (UGX)", "Interest Rate (%)", "Term (months)", "Total Due (UGX)", "Monthly Payment (UGX)", "Status", "Applied", "Approved"];
+    const header = ["Member", "Principal (UGX)", "Interest Rate (%)", "Term (months)", "Months Elapsed", "Total Interest (UGX)", "Total Due (UGX)", "Monthly Payment (UGX)", "Status", "Applied", "Approved"];
     const rows = loans.map(l => {
       const rate = l.interest_rate ?? 0;
-      const totalDue = l.interest_rate != null ? Number(l.principal) * (1 + rate / 100) : "";
+      const principal = Number(l.principal);
+      
+      // Calculate actual months elapsed from approval date to now (or closed date)
+      const startDate = l.approved_at ? new Date(l.approved_at) : null;
+      const endDate = l.closed_at ? new Date(l.closed_at) : new Date();
+      const monthsElapsed = startDate 
+        ? Math.max(1, Math.round((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24 * 30.44)))
+        : l.term_months;
+      
+      // Total Interest = Principal × Rate × Actual Months Elapsed
+      const totalInterest = l.interest_rate != null ? principal * (rate / 100) * monthsElapsed : "";
+      const totalDue = totalInterest !== "" ? principal + Number(totalInterest) : "";
       const monthly = (totalDue && l.term_months > 0) ? Number(totalDue) / l.term_months : "";
+      
       return [
         l.members?.full_name ?? "",
         l.principal,
         l.interest_rate ?? "Pending",
         l.term_months,
+        startDate ? monthsElapsed : "Not approved",
+        totalInterest || "Pending",
         totalDue || "Pending",
         monthly || "Pending",
         l.status,

@@ -31,6 +31,7 @@ export type Loan = {
   term_months: number;
   status: "pending" | "approved" | "rejected" | "closed";
   approved_at: string | null;
+  closed_at: string | null;
   created_at: string;
   members?: Pick<Member, "full_name" | "phone"> | null;
 };
