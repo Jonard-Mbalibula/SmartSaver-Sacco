@@ -78,36 +78,37 @@ export function AuditLogViewer({ logs, totalCount = 0, currentPage = 0 }: AuditL
 function AuditLogEntry({ log }: { log: AuditLog }) {
   const actionColor = getActionColor(log.action);
   const relativeTime = formatRelativeTime(log.created_at);
-  const actionLabel = log.action.replace(/_/g, ' ');
+  const actionDescription = getActionDescription(log);
+  
+  // Extract user name from log
+  const userName = (log as any).actor_name || log.actor_role === 'admin' ? 'Admin' : 'Member';
   
   return (
     <div className="audit-log-entry">
       <div className="audit-log-header">
         <span className={`audit-log-action ${actionColor}`}>
-          {actionLabel}
+          {log.action.replace(/_/g, ' ')}
         </span>
         <span className="audit-log-time">{relativeTime}</span>
       </div>
       
       <div className="audit-log-details">
         <span className="audit-log-actor">
-          {log.actor_role === 'admin' ? '👤 Admin' : '👤 Member'}
+          <strong>{userName}</strong> {actionDescription}
         </span>
-        
-        {log.entity_type && (
-          <span className="audit-log-entity">
-            {log.entity_type}
-          </span>
-        )}
       </div>
       
       {log.reason && (
-        <div className="audit-log-reason">{log.reason}</div>
+        <div className="audit-log-reason">
+          <em>{log.reason}</em>
+        </div>
       )}
       
       <div className="audit-log-meta">
-        {log.ip_address && (
-          <span>IP: {log.ip_address}</span>
+        {log.metadata && Object.keys(log.metadata).length > 0 && (
+          <span className="audit-log-metadata">
+            {formatMetadata(log.metadata)}
+          </span>
         )}
         {log.entity_id && (
           <span className="audit-log-entity-id">
@@ -117,6 +118,28 @@ function AuditLogEntry({ log }: { log: AuditLog }) {
       </div>
     </div>
   );
+}
+
+/**
+ * Generate human-readable description from audit log
+ */
+function getActionDescription(log: AuditLog): string {
+  const action = log.action.toLowerCase().replace(/_/g, ' ');
+  const entityType = log.entity_type ? log.entity_type.replace(/_/g, ' ') : '';
+  
+  if (entityType) {
+    return `${action} ${entityType}`;
+  }
+  return action;
+}
+
+/**
+ * Format metadata object for display
+ */
+function formatMetadata(metadata: Record<string, unknown>): string {
+  return Object.entries(metadata)
+    .map(([key, value]) => `${key}: ${value}`)
+    .join(', ');
 }
 
 /**
