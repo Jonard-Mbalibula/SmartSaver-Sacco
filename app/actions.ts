@@ -1602,15 +1602,21 @@ export async function getAuditLogs(options: {
   actionType?: string;
   dateFrom?: Date;
   dateTo?: Date;
-}): Promise<{ logs: import("@/lib/types").AuditLog[]; total: number }> {
+}): Promise<{ logs: any[]; total: number }> {
   try {
     // 🔒 AUTHORIZATION CHECK
     await requireAdmin();
     
     const supabase = requireSupabase();
     
-    // Build query with count
-    let query = supabase.from('audit_logs').select('*', { count: 'exact' });
+    // Build query with count and join with auth.users to get email
+    // Note: We need to use service-role to access auth.users
+    let query = supabase
+      .from('audit_logs')
+      .select(`
+        *,
+        actor:actor_user_id(email, raw_user_meta_data)
+      `, { count: 'exact' });
     
     // Apply filters if provided
     if (options.actionType) {
@@ -1639,8 +1645,15 @@ export async function getAuditLogs(options: {
       return { logs: [], total: 0 };
     }
     
+    // Transform the data to include user email
+    const logsWithUserInfo = (data || []).map(log => ({
+      ...log,
+      actor_email: log.actor?.email || null,
+      actor_name: log.actor?.raw_user_meta_data?.full_name || log.actor?.email || 'System'
+    }));
+    
     return { 
-      logs: (data as import("@/lib/types").AuditLog[]) || [], 
+      logs: logsWithUserInfo, 
       total: count || 0 
     };
   } catch (err) {
