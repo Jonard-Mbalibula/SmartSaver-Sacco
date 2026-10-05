@@ -6,3 +6,8 @@ node_modules
 dist
 coverage
 tsconfig.tsbuildinfo
+
+# Diagnostic scripts with credentials
+check-admin.mjs
+check-user-role.js
+make-admin.mjs
